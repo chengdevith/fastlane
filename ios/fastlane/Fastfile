@@ -1,0 +1,11 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build iOS app for simulator"
+  lane :build_simulator do
+    ios_root = File.expand_path("..", __dir__)
+    workspace = File.join(ios_root, "smartservemobile.xcworkspace")
+
+    sh("xcodebuild clean build -workspace \"#{workspace}\" -scheme smartservemobile -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17'")
+  end
+end
