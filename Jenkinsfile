@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'mac' }
 
     tools{
         jdk 'jdk17'
