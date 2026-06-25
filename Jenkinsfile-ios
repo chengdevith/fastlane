@@ -59,12 +59,20 @@ pipeline {
         always {
             sh '''
                 mkdir -p "$HOME/Desktop/jenkins-artifacts/mobile-ios"
+                mkdir -p artifacts
 
                 IOS_APP=$(find ios/build/Build/Products/Release-iphonesimulator -name "*.app" -type d 2>/dev/null | head -1 || true)
 
                 if [ -n "$IOS_APP" ]; then
-                    ditto -c -k --sequesterRsrc --keepParent "$IOS_APP" "$HOME/Desktop/jenkins-artifacts/mobile-ios/ios-simulator-${BUILD_NUMBER}.zip"
-                    echo "iOS simulator app copied to Mac Desktop:"
+                    ZIP_NAME="ios-simulator-${BUILD_NUMBER}.zip"
+
+                    ditto -c -k --sequesterRsrc --keepParent "$IOS_APP" "artifacts/$ZIP_NAME"
+
+                    cp -f "artifacts/$ZIP_NAME" "$HOME/Desktop/jenkins-artifacts/mobile-ios/$ZIP_NAME"
+
+                    echo "iOS simulator app zipped:"
+                    ls -lh artifacts/
+                    echo "Copied to Mac Desktop:"
                     ls -lh "$HOME/Desktop/jenkins-artifacts/mobile-ios/"
                 else
                     echo "No iOS simulator .app found."
@@ -73,9 +81,9 @@ pipeline {
 
             script {
                 try {
-                    archiveArtifacts artifacts: 'ios/build/Build/Products/Release-iphonesimulator/*.app/**', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'artifacts/*.zip', allowEmptyArchive: true
                 } catch (err) {
-                    echo "archiveArtifacts failed, but iOS simulator build may already be copied locally."
+                    echo "archiveArtifacts failed, but iOS zip is already copied to Mac Desktop."
                     echo "${err}"
                 }
             }
