@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.smartservemobile'
+    namespace 'com.smartserve.mobile'
     defaultConfig {
-        applicationId 'com.anonymous.smartservemobile'
+        applicationId 'com.smartserve.mobile'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

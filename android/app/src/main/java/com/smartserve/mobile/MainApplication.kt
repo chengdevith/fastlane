@@ -1,4 +1,4 @@
-package com.anonymous.smartservemobile
+package com.smartserve.mobile
 
 import android.app.Application
 import android.content.res.Configuration

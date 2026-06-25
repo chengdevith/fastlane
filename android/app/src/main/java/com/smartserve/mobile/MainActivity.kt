@@ -1,4 +1,4 @@
-package com.anonymous.smartservemobile
+package com.smartserve.mobile
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
