@@ -28,7 +28,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>smartservemobile</string>
-				<string>com.anonymous.smartservemobile</string>
+				<string>com.smartserve.mobile</string>
 			</array>
 		</dict>
 	</array>
