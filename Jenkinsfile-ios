@@ -60,7 +60,7 @@ pipeline {
             sh '''
                 mkdir -p "$HOME/Desktop/jenkins-artifacts/mobile-ios"
 
-                IOS_APP=$(find ios/build/Build/Products/Debug-iphonesimulator -name "*.app" -type d 2>/dev/null | head -1 || true)
+                IOS_APP=$(find ios/build/Build/Products/Release-iphonesimulator -name "*.app" -type d 2>/dev/null | head -1 || true)
 
                 if [ -n "$IOS_APP" ]; then
                     ditto -c -k --sequesterRsrc --keepParent "$IOS_APP" "$HOME/Desktop/jenkins-artifacts/mobile-ios/ios-simulator-${BUILD_NUMBER}.zip"
@@ -73,7 +73,7 @@ pipeline {
 
             script {
                 try {
-                    archiveArtifacts artifacts: 'ios/build/Build/Products/Debug-iphonesimulator/*.app/**', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'ios/build/Build/Products/Release-iphonesimulator/*.app/**', allowEmptyArchive: true
                 } catch (err) {
                     echo "archiveArtifacts failed, but iOS simulator build may already be copied locally."
                     echo "${err}"
