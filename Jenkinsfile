@@ -1,10 +1,6 @@
 pipeline {
     agent { label 'mac' }
 
-    tools{
-        jdk 'jdk17'
-    }
-
     environment {
         ANDROID_HOME = '/opt/android-sdk'
         ANDROID_SDK_ROOT = '/opt/android-sdk'
