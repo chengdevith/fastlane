@@ -2,7 +2,7 @@ pipeline {
     agent { label 'mac' }
 
     environment {
-        JAVA_HOME = '/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home'
+        JAVA_HOME = '/Users/enz/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home'
         ANDROID_HOME = '/Users/enz/Library/Android/sdk'
         ANDROID_SDK_ROOT = '/Users/enz/Library/Android/sdk'
         PATH = "${JAVA_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${env.PATH}"
@@ -33,7 +33,7 @@ pipeline {
         stage('Prepare Android') {
             steps {
                 sh 'chmod +x android/gradlew'
-                sh 'echo "sdk.dir=/opt/android-sdk" > android/local.properties'
+                sh 'echo "sdk.dir=/Users/enz/Library/Android/sdk" > android/local.properties'
             }
         }
 
