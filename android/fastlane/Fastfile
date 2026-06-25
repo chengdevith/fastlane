@@ -1,49 +1,18 @@
 default_platform(:android)
 
 platform :android do
-  desc "Safe clean Android project"
-  lane :clean do
-    sh("rm -rf app/.cxx")
-    sh("rm -rf app/build")
-    sh("rm -rf build")
-    sh("rm -rf .gradle")
-  end
-
   desc "Build Android debug APK"
   lane :build_debug do
-    gradle(task: "assembleDebug")
+    gradle(
+      task: "assembleDebug"
+    )
   end
 
-  desc "Install Android debug APK to connected device/emulator"
-  lane :install_debug do
-    apk_path = File.expand_path("../app/build/outputs/apk/debug/app-debug.apk", __dir__)
-
-    UI.user_error!("APK not found. Run: bundle exec fastlane build_debug") unless File.exist?(apk_path)
-
-    sh("adb install -r \"#{apk_path}\"")
-  end
-
-  desc "Build and install Android debug APK"
-  lane :build_install_debug do
-    gradle(task: "assembleDebug")
-
-    apk_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
-    sh("adb install -r \"#{apk_path}\"")
-  end
-
-  desc "Clean and build Android debug APK"
-  lane :clean_build_debug do
-    clean
-    gradle(task: "assembleDebug")
-  end
-
-  desc "Build Android release APK"
+  desc "Build Android release AAB"
   lane :build_release do
-    gradle(task: "assembleRelease")
-  end
-
-  desc "Launch Android app"
-  lane :launch_debug do
-    sh("adb shell monkey -p com.anonymous.smartservemobile 1")
+    gradle(
+      task: "bundle",
+      build_type: "Release"
+    )
   end
 end
