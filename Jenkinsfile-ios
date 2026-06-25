@@ -13,14 +13,13 @@ pipeline {
         stage('Check Environment') {
             steps {
                 sh 'pwd'
-                sh 'ls -la'
-                sh 'java -version'
+                sh 'xcodebuild -version'
+                sh 'xcrun simctl list devices available | head -50'
                 sh 'node -v'
                 sh 'npm -v'
                 sh 'ruby -v'
                 sh 'bundle -v'
-                sh 'adb --version'
-                sh 'sdkmanager --version'
+                sh 'pod --version'
             }
         }
 
@@ -30,33 +29,27 @@ pipeline {
             }
         }
 
-        stage('Prepare Android') {
+        stage('Install iOS Fastlane Dependencies') {
             steps {
-                sh 'chmod +x android/gradlew'
-                sh 'echo "sdk.dir=/Users/enz/Library/Android/sdk" > android/local.properties'
-            }
-        }
-
-        stage('Install Fastlane Dependencies') {
-            steps {
-                dir('android') {
+                dir('ios') {
                     sh 'bundle config set path vendor/bundle'
                     sh 'bundle install'
                 }
             }
         }
 
-        stage('Build Android Release') {
+        stage('Install iOS Pods') {
             steps {
-                dir('android') {
-                    withCredentials([
-                                    file(credentialsId: 'android-upload-keystore', variable: 'ANDROID_KEYSTORE_FILE'),
-                                    string(credentialsId: 'android-keystore-password', variable: 'ANDROID_KEYSTORE_PASSWORD'),
-                                    string(credentialsId: 'android-key-alias', variable: 'ANDROID_KEY_ALIAS'),
-                                    string(credentialsId: 'android-key-password', variable: 'ANDROID_KEY_PASSWORD')
-                                ]) {
-                                    sh 'bundle exec fastlane build_release'
-                                }
+                dir('ios') {
+                    sh 'pod install'
+                }
+            }
+        }
+
+        stage('Build iOS Simulator') {
+            steps {
+                dir('ios') {
+                    sh 'bundle exec fastlane build_simulator'
                 }
             }
         }
@@ -64,44 +57,36 @@ pipeline {
 
     post {
         always {
-            // Stop Gradle daemon safely
-            dir('android') {
-                sh './gradlew --stop || true'
-            }
-
-            // Copy AAB to Mac Desktop first
             sh '''
-                mkdir -p "$HOME/Desktop/jenkins-artifacts/mobile-android"
+                mkdir -p "$HOME/Desktop/jenkins-artifacts/mobile-ios"
 
-                AAB_FILE=$(ls android/app/build/outputs/bundle/release/*.aab 2>/dev/null | head -1 || true)
+                IOS_APP=$(find ios/build/Build/Products/Debug-iphonesimulator -name "*.app" -type d 2>/dev/null | head -1 || true)
 
-                if [ -n "$AAB_FILE" ]; then
-                    cp -f "$AAB_FILE" "$HOME/Desktop/jenkins-artifacts/mobile-android/app-release-${BUILD_NUMBER}.aab"
-                    echo "AAB copied to Mac Desktop:"
-                    ls -lh "$HOME/Desktop/jenkins-artifacts/mobile-android/"
+                if [ -n "$IOS_APP" ]; then
+                    ditto -c -k --sequesterRsrc --keepParent "$IOS_APP" "$HOME/Desktop/jenkins-artifacts/mobile-ios/ios-simulator-${BUILD_NUMBER}.zip"
+                    echo "iOS simulator app copied to Mac Desktop:"
+                    ls -lh "$HOME/Desktop/jenkins-artifacts/mobile-ios/"
                 else
-                    echo "No AAB file found."
+                    echo "No iOS simulator .app found."
                 fi
             '''
 
-            // Try to archive to Jenkins UI, but do not fail build if archive has remoting issue
             script {
                 try {
-                    archiveArtifacts artifacts: 'android/app/build/outputs/bundle/release/*.aab', allowEmptyArchive: false
+                    archiveArtifacts artifacts: 'ios/build/Build/Products/Debug-iphonesimulator/*.app/**', allowEmptyArchive: true
                 } catch (err) {
-                    echo "archiveArtifacts failed, but Android release build already succeeded."
-                    echo "AAB is available on the Mac agent Desktop."
+                    echo "archiveArtifacts failed, but iOS simulator build may already be copied locally."
                     echo "${err}"
                 }
             }
         }
 
         success {
-            echo 'Android release AAB build completed successfully.'
+            echo 'iOS simulator build completed successfully.'
         }
 
         failure {
-            echo 'Android build failed. Check console output.'
+            echo 'iOS build failed. Check console output.'
         }
     }
 }
