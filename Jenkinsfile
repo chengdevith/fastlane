@@ -2,9 +2,11 @@ pipeline {
     agent { label 'mac' }
 
     environment {
-        ANDROID_HOME = '/opt/android-sdk'
-        ANDROID_SDK_ROOT = '/opt/android-sdk'
-        PATH = "/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:${env.PATH}"
+        JAVA_HOME = '/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home'
+        ANDROID_HOME = '/Users/enz/Library/Android/sdk'
+        ANDROID_SDK_ROOT = '/Users/enz/Library/Android/sdk'
+        PATH = "${JAVA_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${env.PATH}"
+        NODE_ENV = 'production'
     }
 
     stages {
