@@ -64,11 +64,36 @@ pipeline {
 
     post {
         always {
+            // Stop Gradle daemon safely
             dir('android') {
                 sh './gradlew --stop || true'
             }
 
-            archiveArtifacts artifacts: 'android/app/build/outputs/bundle/release/*.aab', allowEmptyArchive: false
+            // Copy AAB to Mac Desktop first
+            sh '''
+                mkdir -p "$HOME/Desktop/jenkins-artifacts/mobile-android"
+
+                AAB_FILE=$(ls android/app/build/outputs/bundle/release/*.aab 2>/dev/null | head -1 || true)
+
+                if [ -n "$AAB_FILE" ]; then
+                    cp -f "$AAB_FILE" "$HOME/Desktop/jenkins-artifacts/mobile-android/app-release-${BUILD_NUMBER}.aab"
+                    echo "AAB copied to Mac Desktop:"
+                    ls -lh "$HOME/Desktop/jenkins-artifacts/mobile-android/"
+                else
+                    echo "No AAB file found."
+                fi
+            '''
+
+            // Try to archive to Jenkins UI, but do not fail build if archive has remoting issue
+            script {
+                try {
+                    archiveArtifacts artifacts: 'android/app/build/outputs/bundle/release/*.aab', allowEmptyArchive: false
+                } catch (err) {
+                    echo "archiveArtifacts failed, but Android release build already succeeded."
+                    echo "AAB is available on the Mac agent Desktop."
+                    echo "${err}"
+                }
+            }
         }
 
         success {
