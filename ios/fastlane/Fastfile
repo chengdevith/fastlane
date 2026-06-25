@@ -5,7 +5,14 @@ platform :ios do
   lane :build_simulator do
     ios_root = File.expand_path("..", __dir__)
     workspace = File.join(ios_root, "smartservemobile.xcworkspace")
+    derived_data_path = File.join(ios_root, "build")
 
-    sh("xcodebuild clean build -workspace \"#{workspace}\" -scheme smartservemobile -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17'")
+    sh("xcodebuild clean build \
+      -workspace \"#{workspace}\" \
+      -scheme smartservemobile \
+      -configuration Debug \
+      -sdk iphonesimulator \
+      -destination 'platform=iOS Simulator,name=iPhone 17' \
+      -derivedDataPath \"#{derived_data_path}\"")
   end
 end
