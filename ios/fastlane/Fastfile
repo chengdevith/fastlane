@@ -10,7 +10,7 @@ platform :ios do
     sh("xcodebuild clean build \
       -workspace \"#{workspace}\" \
       -scheme smartservemobile \
-      -configuration Debug \
+      -configuration Release \
       -sdk iphonesimulator \
       -destination 'platform=iOS Simulator,name=iPhone 17' \
       -derivedDataPath \"#{derived_data_path}\"")
