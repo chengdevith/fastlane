@@ -48,10 +48,10 @@ pipeline {
             }
         }
 
-        stage('Build Android Debug') {
+        stage('Build Android Release') {
             steps {
                 dir('android') {
-                    sh 'bundle exec fastlane build_debug'
+                    sh 'bundle exec fastlane build_release'
                 }
             }
         }
