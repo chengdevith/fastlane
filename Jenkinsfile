@@ -51,7 +51,14 @@ pipeline {
         stage('Build Android Release') {
             steps {
                 dir('android') {
-                    sh 'bundle exec fastlane build_release'
+                    withCredentials([
+                                    file(credentialsId: 'android-upload-keystore', variable: 'ANDROID_KEYSTORE_FILE'),
+                                    string(credentialsId: 'android-keystore-password', variable: 'ANDROID_KEYSTORE_PASSWORD'),
+                                    string(credentialsId: 'android-key-alias', variable: 'ANDROID_KEY_ALIAS'),
+                                    string(credentialsId: 'android-key-password', variable: 'ANDROID_KEY_PASSWORD')
+                                ]) {
+                                    sh 'bundle exec fastlane build_release'
+                                }
                 }
             }
         }
