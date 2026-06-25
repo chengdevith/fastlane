@@ -64,11 +64,15 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'android/app/build/outputs/**/*', allowEmptyArchive: true
+            dir('android') {
+                sh './gradlew --stop || true'
+            }
+
+            archiveArtifacts artifacts: 'android/app/build/outputs/bundle/release/*.aab', allowEmptyArchive: false
         }
 
         success {
-            echo 'Android build completed successfully.'
+            echo 'Android release AAB build completed successfully.'
         }
 
         failure {
