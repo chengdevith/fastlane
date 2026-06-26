@@ -31,21 +31,27 @@ platform :android do
     )
   end
 
-  desc "Build release APK and upload to Firebase App Distribution"
-  lane :firebase_release do
-    build_release_apk
+   desc "Build release APK and upload to Firebase App Distribution"
+   lane :firebase_release do
+     build_release_apk
 
-    apk_path = Dir["app/build/outputs/apk/release/*.apk"].first
+     apk_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
 
-    UI.user_error!("No release APK found") if apk_path.nil?
+     if apk_path.nil? || !File.exist?(apk_path)
+       apk_path = Dir[File.expand_path("../app/build/outputs/apk/release/*.apk", __dir__)].first
+     end
 
-    firebase_app_distribution(
-      app: ENV["FIREBASE_ANDROID_APP_ID"],
-      firebase_cli_token: ENV["FIREBASE_TOKEN"],
-      android_artifact_type: "APK",
-      android_artifact_path: apk_path,
-      groups: "testers",
-      release_notes: "SmartServe Android Jenkins build ##{ENV['BUILD_NUMBER']}"
-    )
-  end
+     UI.user_error!("No release APK found") if apk_path.nil? || !File.exist?(apk_path)
+
+     UI.message("Uploading APK: #{apk_path}")
+
+     firebase_app_distribution(
+       app: ENV["FIREBASE_ANDROID_APP_ID"],
+       firebase_cli_token: ENV["FIREBASE_TOKEN"],
+       android_artifact_type: "APK",
+       android_artifact_path: apk_path,
+       groups: "testers",
+       release_notes: "SmartServe Android Jenkins build ##{ENV['BUILD_NUMBER']}"
+     )
+   end
 end
