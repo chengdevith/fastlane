@@ -15,4 +15,37 @@ platform :android do
       build_type: "Release"
     )
   end
+
+  desc "Build Android release APK"
+  lane :build_release_apk do
+    # Do not use gradle clean here.
+    # It can break React Native CMake/codegen cache.
+    sh("rm -rf app/.cxx")
+    sh("rm -rf app/build")
+    sh("rm -rf build")
+
+    gradle(
+      task: "assemble",
+      build_type: "Release",
+      flags: "--no-daemon"
+    )
+  end
+
+  desc "Build release APK and upload to Firebase App Distribution"
+  lane :firebase_release do
+    build_release_apk
+
+    apk_path = Dir["app/build/outputs/apk/release/*.apk"].first
+
+    UI.user_error!("No release APK found") if apk_path.nil?
+
+    firebase_app_distribution(
+      app: ENV["FIREBASE_ANDROID_APP_ID"],
+      firebase_cli_token: ENV["FIREBASE_TOKEN"],
+      android_artifact_type: "APK",
+      android_artifact_path: apk_path,
+      groups: "testers",
+      release_notes: "SmartServe Android Jenkins build ##{ENV['BUILD_NUMBER']}"
+    )
+  end
 end

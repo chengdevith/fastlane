@@ -34,52 +34,28 @@ pipeline {
             }
         }
 
-        stage('Build Android Release APK') {
+        stage('Install Fastlane Dependencies') {
+            steps {
+                dir('android') {
+                    sh 'bundle config set path vendor/bundle'
+                    sh 'bundle install'
+                }
+            }
+        }
+
+        stage('Build APK and Upload to Firebase') {
             steps {
                 dir('android') {
                     withCredentials([
                         file(credentialsId: 'android-upload-keystore', variable: 'ANDROID_KEYSTORE_FILE'),
                         string(credentialsId: 'android-keystore-password', variable: 'ANDROID_KEYSTORE_PASSWORD'),
                         string(credentialsId: 'android-key-alias', variable: 'ANDROID_KEY_ALIAS'),
-                        string(credentialsId: 'android-key-password', variable: 'ANDROID_KEY_PASSWORD')
+                        string(credentialsId: 'android-key-password', variable: 'ANDROID_KEY_PASSWORD'),
+                        string(credentialsId: 'firebase-token', variable: 'FIREBASE_TOKEN'),
+                        string(credentialsId: 'firebase-android-app-id', variable: 'FIREBASE_ANDROID_APP_ID')
                     ]) {
-                        sh './gradlew clean assembleRelease --no-daemon'
+                        sh 'bundle exec fastlane firebase_release'
                     }
-                }
-            }
-        }
-
-        stage('Upload APK to Firebase App Distribution') {
-            steps {
-                withCredentials([
-                    string(credentialsId: 'firebase-token', variable: 'FIREBASE_TOKEN'),
-                    string(credentialsId: 'firebase-android-app-id', variable: 'FIREBASE_ANDROID_APP_ID')
-                ]) {
-                    sh '''
-                        APK_FILE=$(ls android/app/build/outputs/apk/release/*.apk 2>/dev/null | head -1 || true)
-
-                        if [ -z "$APK_FILE" ]; then
-                            echo "No release APK found."
-                            exit 1
-                        fi
-
-                        echo "Uploading APK to Firebase:"
-                        echo "$APK_FILE"
-
-                        if command -v firebase >/dev/null 2>&1; then
-                            firebase appdistribution:distribute "$APK_FILE" \
-                              --app "$FIREBASE_ANDROID_APP_ID" \
-                              --groups "testers" \
-                              --release-notes "SmartServe Android Jenkins build #${BUILD_NUMBER}" \
-                              --token "$FIREBASE_TOKEN"
-                        else
-                            npx -y firebase-tools appdistribution:distribute "$APK_FILE" \
-                              --app "$FIREBASE_ANDROID_APP_ID" \
-                              --groups "testers" \
-                              --release-notes "SmartServe Android Jenkins build #${BUILD_NUMBER}" \
-                              --token "$FIREBASE_TOKEN"
-                        fi
-                    '''
                 }
             }
         }
