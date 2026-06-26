@@ -1,20 +1,23 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Build iOS app for simulator with embedded JS bundle"
-  lane :build_simulator do
-    ios_root = File.expand_path("..", __dir__)
-    workspace = File.join(ios_root, "smartservemobile.xcworkspace")
-    derived_data_path = File.join(ios_root, "build")
+  desc "Build iOS IPA and upload to Firebase App Distribution"
+  lane :firebase_release do
+    build_app(
+      workspace: "smartservemobile.xcworkspace",
+      scheme: "smartservemobile",
+      configuration: "Release",
+      export_method: "ad-hoc",
+      output_directory: "build",
+      output_name: "SmartServe.ipa"
+    )
 
-    sh("xcodebuild build \
-      -workspace \"#{workspace}\" \
-      -scheme smartservemobile \
-      -configuration Release \
-      -sdk iphonesimulator \
-      -destination 'platform=iOS Simulator,name=iPhone 17' \
-      -derivedDataPath \"#{derived_data_path}\" \
-      COMPILER_INDEX_STORE_ENABLE=NO \
-      ONLY_ACTIVE_ARCH=YES")
+    firebase_app_distribution(
+      app: ENV["FIREBASE_IOS_APP_ID"],
+      firebase_cli_token: ENV["FIREBASE_TOKEN"],
+      ipa_path: "build/SmartServe.ipa",
+      groups: "testers",
+      release_notes: "SmartServe iOS Jenkins build ##{ENV['BUILD_NUMBER']}"
+    )
   end
 end

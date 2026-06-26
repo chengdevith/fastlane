@@ -38,6 +38,7 @@ ios/DerivedData/
 ios/*.xcworkspace/xcuserdata/
 ios/**/*.xcuserstate
 ios/.xcode.env.local
+ios/smartservemobile.xcworkspace/GoogleService-Info.plist
 
 # Kotlin
 .kotlin/

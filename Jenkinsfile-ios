@@ -2,11 +2,9 @@ pipeline {
     agent { label 'mac' }
 
     environment {
-        JAVA_HOME = '/Users/enz/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home'
-        ANDROID_HOME = '/Users/enz/Library/Android/sdk'
-        ANDROID_SDK_ROOT = '/Users/enz/Library/Android/sdk'
-        PATH = "${JAVA_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${env.PATH}"
         NODE_ENV = 'production'
+        LANG = 'en_US.UTF-8'
+        LC_ALL = 'en_US.UTF-8'
     }
 
     stages {
@@ -41,15 +39,20 @@ pipeline {
         stage('Install iOS Pods') {
             steps {
                 dir('ios') {
-                    sh 'pod install'
+                    sh 'bundle exec pod install'
                 }
             }
         }
 
-        stage('Build iOS Simulator') {
+        stage('Build IPA and Upload to Firebase') {
             steps {
                 dir('ios') {
-                    sh 'bundle exec fastlane build_simulator'
+                    withCredentials([
+                        string(credentialsId: 'firebase-ios-app-id', variable: 'FIREBASE_IOS_APP_ID'),
+                        string(credentialsId: 'firebase-token', variable: 'FIREBASE_TOKEN')
+                    ]) {
+                        sh 'bundle exec fastlane firebase_release'
+                    }
                 }
             }
         }
@@ -61,40 +64,39 @@ pipeline {
                 mkdir -p "$HOME/Desktop/jenkins-artifacts/mobile-ios"
                 mkdir -p artifacts
 
-                IOS_APP=$(find ios/build/Build/Products/Release-iphonesimulator -name "*.app" -type d 2>/dev/null | head -1 || true)
+                IPA_FILE=$(find ios/build -name "*.ipa" -type f 2>/dev/null | head -1 || true)
 
-                if [ -n "$IOS_APP" ]; then
-                    ZIP_NAME="ios-simulator-${BUILD_NUMBER}.zip"
+                if [ -n "$IPA_FILE" ]; then
+                    IPA_NAME="SmartServe-${BUILD_NUMBER}.ipa"
 
-                    ditto -c -k --sequesterRsrc --keepParent "$IOS_APP" "artifacts/$ZIP_NAME"
+                    cp -f "$IPA_FILE" "artifacts/$IPA_NAME"
+                    cp -f "$IPA_FILE" "$HOME/Desktop/jenkins-artifacts/mobile-ios/$IPA_NAME"
 
-                    cp -f "artifacts/$ZIP_NAME" "$HOME/Desktop/jenkins-artifacts/mobile-ios/$ZIP_NAME"
-
-                    echo "iOS simulator app zipped:"
+                    echo "IPA copied:"
                     ls -lh artifacts/
                     echo "Copied to Mac Desktop:"
                     ls -lh "$HOME/Desktop/jenkins-artifacts/mobile-ios/"
                 else
-                    echo "No iOS simulator .app found."
+                    echo "No IPA file found."
                 fi
             '''
 
             script {
                 try {
-                    archiveArtifacts artifacts: 'artifacts/*.zip', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'artifacts/*.ipa', allowEmptyArchive: true
                 } catch (err) {
-                    echo "archiveArtifacts failed, but iOS zip is already copied to Mac Desktop."
+                    echo "archiveArtifacts failed, but IPA may already be copied to Mac Desktop."
                     echo "${err}"
                 }
             }
         }
 
         success {
-            echo 'iOS simulator build completed successfully.'
+            echo 'iOS IPA build and Firebase upload completed successfully.'
         }
 
         failure {
-            echo 'iOS build failed. Check console output.'
+            echo 'iOS IPA build or Firebase upload failed. Check console output.'
         }
     }
 }
