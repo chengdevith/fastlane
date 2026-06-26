@@ -35,13 +35,21 @@ platform :android do
    lane :firebase_release do
      build_release_apk
 
-     apk_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+     all_apks = lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS] || []
+
+     apk_path = all_apks.find { |path| path.include?("arm64") }
+
+     if apk_path.nil? || !File.exist?(apk_path)
+       apk_path = all_apks.first
+     end
 
      if apk_path.nil? || !File.exist?(apk_path)
        apk_path = Dir[File.expand_path("../app/build/outputs/apk/release/*.apk", __dir__)].first
      end
 
      UI.user_error!("No release APK found") if apk_path.nil? || !File.exist?(apk_path)
+
+     UI.message("Uploading APK: #{apk_path}")
 
      release_notes = "SmartServe Android Jenkins build ##{ENV['BUILD_NUMBER']}\nCommit: #{`git log -1 --pretty=%s`.strip}"
 
