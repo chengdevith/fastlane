@@ -43,15 +43,40 @@ platform :android do
 
      UI.user_error!("No release APK found") if apk_path.nil? || !File.exist?(apk_path)
 
-     UI.message("Uploading APK: #{apk_path}")
+     release_notes = "SmartServe Android Jenkins build ##{ENV['BUILD_NUMBER']}\nCommit: #{`git log -1 --pretty=%s`.strip}"
 
-     firebase_app_distribution(
-       app: ENV["FIREBASE_ANDROID_APP_ID"],
-       firebase_cli_token: ENV["FIREBASE_TOKEN"],
-       android_artifact_type: "APK",
-       android_artifact_path: apk_path,
-       groups: "testers",
-       release_notes: "SmartServe Android Jenkins build ##{ENV['BUILD_NUMBER']}\nCommit: #{`git log -1 --pretty=%s`.strip}"
-     )
+     success = false
+     last_error = nil
+
+     (1..3).each do |attempt|
+       begin
+         UI.message("Firebase App Distribution upload attempt #{attempt}/3")
+         UI.message("Uploading APK: #{apk_path}")
+
+         firebase_app_distribution(
+           app: ENV["FIREBASE_ANDROID_APP_ID"],
+           firebase_cli_token: ENV["FIREBASE_TOKEN"],
+           android_artifact_type: "APK",
+           android_artifact_path: apk_path,
+           groups: "testers",
+           release_notes: release_notes,
+           debug: true
+         )
+
+         success = true
+         break
+       rescue => e
+         last_error = e
+         UI.important("Firebase upload failed on attempt #{attempt}/3")
+         UI.important(e.message)
+
+         if attempt < 3
+           UI.message("Retrying Firebase upload in 45 seconds...")
+           sleep(45)
+         end
+       end
+     end
+
+     UI.user_error!("Firebase upload failed after 3 attempts: #{last_error}") unless success
    end
 end
