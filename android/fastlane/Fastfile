@@ -27,7 +27,7 @@ platform :android do
     gradle(
       task: "assemble",
       build_type: "Release",
-      flags: "--no-daemon"
+      flags: "--no-daemon -PVERSION_CODE=#{ENV['BUILD_NUMBER'] || 1} -PVERSION_NAME=1.0.#{ENV['BUILD_NUMBER'] || 1}"
     )
   end
 
@@ -51,7 +51,7 @@ platform :android do
        android_artifact_type: "APK",
        android_artifact_path: apk_path,
        groups: "testers",
-       release_notes: "SmartServe Android Jenkins build ##{ENV['BUILD_NUMBER']}"
+       release_notes: "SmartServe Android Jenkins build ##{ENV['BUILD_NUMBER']}\nCommit: #{`git log -1 --pretty=%s`.strip}"
      )
    end
 end
