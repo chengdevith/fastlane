@@ -8,7 +8,7 @@ node_modules/
 *.keystore
 android/key.properties
 android/app/upload-keystore.jks
-
+android/app/google-services.json
 # Expo
 .expo/
 dist/
